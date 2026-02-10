@@ -31,12 +31,12 @@ const columns: GridColDef[] = [
     description: 'The duration in minutes.',
     valueFormatter: (params) => msToMinutes(params.value),
   },
-  {
+  /*{
     field: 'explicit',
     headerName: 'explicit',
     description:
       'Whether or not the track has explicit lyrics ( true = yes it does; false = no it does not OR unknown).',
-  },
+  },*/
   {
     field: 'artist',
     headerName: 'artist',
@@ -55,12 +55,12 @@ const columns: GridColDef[] = [
     description:
       'Energy is a measure from 0.0 to 1.0 and represents a perceptual measure of intensity and activity. Typically, energetic tracks feel fast, loud, and noisy. For example, death metal has high energy, while a Bach prelude scores low on the scale. Perceptual features contributing to this attribute include dynamic range, perceived loudness, timbre, onset rate, and general entropy.',
   },
-  {
+  /*{
     field: 'key',
     headerName: 'key',
     description:
       'The key the track is in. Integers map to pitches using standard Pitch Class notation. E.g. 0 = C, 1 = C♯/D♭, 2 = D, and so on. If no key was detected, the value is -1.',
-  },
+  },*/
   {
     field: 'loudness',
     headerName: 'loudness',

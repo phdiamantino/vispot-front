@@ -6,7 +6,7 @@ import { Chip, Divider } from '@mui/material';
 import Box from '@mui/material/Box';
 import { ReactNode } from 'react';
 import { ResetButton } from '../ResetButton';
-import { AddPlaylist } from './AddPlaylist';
+//import { AddPlaylist } from './AddPlaylist';
 import { EdgeBundlingSettings } from './EdgeBundlingSettings';
 import styles from './styles.module.css';
 
@@ -28,7 +28,6 @@ const list = () => (
       <h5>Dataset</h5>
       <SelectMock />
     </div>
-    <AddPlaylist />
 
     <CustomDivider>VISUAL ATTRIBUTES</CustomDivider>
     <div className={styles.settingsItem}>
