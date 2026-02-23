@@ -9,8 +9,8 @@ type Node = {
   id: string | number;
   label: string;
   title: string;
-  color: string;
-  font: any;
+  color: any;
+  font?: any;
 };
 
 type Edge = {
@@ -33,18 +33,38 @@ export const NetworkGraph = () => {
   const networkRef = useRef<any>(null);
 
   // ===========================
+  // COLOR UTILS (CONTRAST)
+  // ===========================
+
+  const getContrastColor = (hexColor: string) => {
+    if (!hexColor) return '#000';
+
+    const hex = hexColor.replace('#', '');
+    const r = parseInt(hex.substring(0, 2), 16);
+    const g = parseInt(hex.substring(2, 4), 16);
+    const b = parseInt(hex.substring(4, 6), 16);
+
+    // luminance formula
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+
+    return luminance > 0.5 ? '#000000' : '#FFFFFF';
+  };
+
+  // ===========================
   // BUILD NODES
   // ===========================
+
   const nodes: Node[] = useMemo(() => {
     if (!data?.songs) return [];
 
     return data.songs.map((track: any) => {
-      const attributeValue = track[selectedAttribute];
-      
+      const nodeColor =
+        track.colors[selectedPalette][selectedAttribute];
+
       const attributeLabel =
         selectedAttribute +
         ': ' +
-        attributeValue +
+        track[selectedAttribute] +
         (hasMoreThanOnePlaylist && selectedAttribute !== 'playlist'
           ? `<br>[${track.playlist}]`
           : '');
@@ -53,14 +73,19 @@ export const NetworkGraph = () => {
         id: track.id,
         label: String(track.id),
         title: `${track.name}<br>${attributeLabel}`,
-        color: track.colors[selectedPalette][selectedAttribute],
-        // Configuração individual do nó para garantir contraste
+        color: {
+          background: nodeColor,
+          border: '#222',
+          highlight: {
+            background: nodeColor,
+            border: '#000',
+          },
+        },
         font: {
-          color: '#ffffff',
+          color: getContrastColor(nodeColor),
           size: 14,
-          background: 'rgba(0,0,0,0.45)', // Fundo escuro atrás do número
-          padding: 2,
-        }
+          bold: true,
+        },
       };
     });
   }, [data, selectedAttribute, selectedPalette, hasMoreThanOnePlaylist]);
@@ -68,6 +93,7 @@ export const NetworkGraph = () => {
   // ===========================
   // BUILD EDGES
   // ===========================
+
   const edges: Edge[] = useMemo(() => {
     if (!data?.correlation || !nodes.length) return [];
 
@@ -78,6 +104,7 @@ export const NetworkGraph = () => {
         if (j <= i) return;
 
         const value = data.correlation[i][j];
+
         result.push({
           from: trackA.id,
           to: trackB.id,
@@ -92,6 +119,7 @@ export const NetworkGraph = () => {
   // ===========================
   // FILTER EDGES
   // ===========================
+
   const filteredEdges = useMemo(() => {
     if (!edges.length) return [];
 
@@ -107,13 +135,17 @@ export const NetworkGraph = () => {
   // ===========================
   // GRAPH DATA
   // ===========================
+
   const graph = useMemo(() => {
     if (!nodes.length) return { nodes: [], edges: [] };
 
     return {
       nodes: nodes.map((n) => ({
         ...n,
-        opacity: !selectedTracks || selectedTracks.includes(n.id) ? 1 : 0.3,
+        opacity:
+          !selectedTracks || selectedTracks.includes(n.id)
+            ? 1
+            : 0.3,
       })),
       edges: filteredEdges,
     };
@@ -122,8 +154,9 @@ export const NetworkGraph = () => {
   // ===========================
   // EVENTS
   // ===========================
+
   const events = {
-    select: (event: any) => {
+    select: (event) => {
       const { nodes } = event;
       if (nodes.length) {
         setSelectedTracks([nodes[0]]);
@@ -137,43 +170,31 @@ export const NetworkGraph = () => {
   };
 
   // ===========================
-  // OPTIONS (Solução 2 aplicada aqui)
+  // OPTIONS
   // ===========================
+
   const options = {
     autoResize: true,
     layout: {
       hierarchical: false,
     },
     physics: {
-      enabled: false, // Mantém o layout fixo baseado nos seus arquivos .ts
-    },
-    nodes: {
-      shape: 'dot',
-      size: 20,
-      font: {
-        face: 'Arial',
-      }
+      enabled: false,
     },
     edges: {
-      color: {
-        color: '#2b7ce9',
-        highlight: '#52ff52', // Correção da sintaxe do highlight
-        hover: '#2b7ce9'
-      },
+      color: 'blue',
+      highlight: 'green',
       arrows: {
         to: false,
         from: false,
       },
     },
-    interaction: {
-      hover: true,
-      tooltipDelay: 200,
-    }
   };
 
   // ===========================
   // LOADING
   // ===========================
+
   if (loading) {
     return <Skeleton variant="circular" height="100%" />;
   }
@@ -181,6 +202,7 @@ export const NetworkGraph = () => {
   // ===========================
   // RENDER
   // ===========================
+
   return (
     <div style={{ height: 510 }}>
       <Graph
