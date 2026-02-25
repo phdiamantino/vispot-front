@@ -1,6 +1,6 @@
 import { ApiResponseType } from '@/components/Table/types';
 
-export const hipHopMock: ApiResponseType = {
+export const hip_hopMock: ApiResponseType = {
   songs: [
     {
       id: 1,

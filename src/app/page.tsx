@@ -1,19 +1,34 @@
 'use client';
-import { EdgeBundling } from '@/components/EdgeBundling';
+
 import { Navbar } from '@/components/Navbar';
 import { NetworkGraph } from '@/components/NetworkGraph';
 import { DataTable } from '@/components/Table';
 import { drawerWidth } from '@/constants';
 import { AppProvider } from '@/contexts/AppProvider';
 import { DataContext, DataProvider } from '@/contexts/DataProvider';
-import { Alert, Box, CssBaseline, Snackbar } from '@mui/material';
+import {
+  Alert,
+  Backdrop,
+  Box,
+  CircularProgress,
+  CssBaseline,
+  Snackbar,
+  Typography
+} from '@mui/material';
 import { styled } from '@mui/material/styles';
 import dynamic from 'next/dynamic';
 import { useContext, useEffect, useState } from 'react';
 import styles from './page.module.css';
+
+// Importações dinâmicas para evitar erros de SSR com bibliotecas de gráfico
 const ScatterPlot = dynamic(() => import('@/components/Scatterplot'), {
   ssr: false,
-  loading: () => <>Loading...</>,
+  loading: () => <>Loading Scatter Plot...</>,
+});
+
+const EdgeBundling = dynamic(() => import('@/components/EdgeBundling').then(mod => mod.EdgeBundling), {
+  ssr: false,
+  loading: () => <>Loading Graph...</>,
 });
 
 const Main = styled('main', { shouldForwardProp: (prop) => prop !== 'open' })<{
@@ -38,7 +53,8 @@ const Main = styled('main', { shouldForwardProp: (prop) => prop !== 'open' })<{
 }));
 
 const Body = () => {
-  const { error, setError } = useContext(DataContext);
+  const { error, setError, loading } = useContext(DataContext);
+  
   const [drawerOpen, setDrawerOpen] = useState(
     typeof window !== 'undefined' && window.innerWidth > 992
   );
@@ -53,10 +69,7 @@ const Body = () => {
   };
 
   const handleClose = (_?: React.SyntheticEvent | Event, reason?: string) => {
-    if (reason === 'clickaway') {
-      return;
-    }
-
+    if (reason === 'clickaway') return;
     setSnackBarOpen(false);
     setError('');
   };
@@ -73,6 +86,28 @@ const Body = () => {
   return (
     <>
       <Navbar open={drawerOpen} handleOpen={toggleDrawerOpen} />
+
+      <Backdrop
+        sx={{ 
+          color: '#fff', 
+          zIndex: (theme) => theme.zIndex.drawer + 999,
+          flexDirection: 'column',
+          gap: 2,
+          backgroundColor: 'rgba(0, 0, 0, 0.7)' 
+        }}
+        open={loading}
+      >
+        <CircularProgress color="inherit" />
+        <Box textAlign="center">
+          <Typography variant="h6">Analyzing Data...</Typography>
+          <Typography variant="body2">
+            Processing t-SNE and Graphs.
+            <br />
+            Please wait a moment.
+          </Typography>
+        </Box>
+      </Backdrop>
+
       <Main open={drawerOpen} className={styles.main}>
         <Snackbar
           open={snackBarOpen}
@@ -84,6 +119,7 @@ const Body = () => {
             {error}
           </Alert>
         </Snackbar>
+        
         <div className={styles.gridContainer}>
           <div className={styles.splitRow}>
             {splitItems.map((item) => (

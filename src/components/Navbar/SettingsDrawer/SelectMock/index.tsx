@@ -9,7 +9,7 @@ import {
   Select,
   SelectChangeEvent,
 } from '@mui/material';
-import { useContext, useState } from 'react';
+import { useCallback, useContext, useState } from 'react';
 
 import { DataContext } from '@/contexts/DataProvider';
 import { mocks } from '@/mocks';
@@ -18,11 +18,10 @@ import { backendApi } from '@/services/api';
 const ALL_DATASETS = Object.keys(mocks);
 
 export const SelectMock = () => {
-  const { setData, setLoading, setError } = useContext(DataContext);
-
+  const { setData, setLoading, setError, setPlaylistNames } = useContext(DataContext);
   const [selectedMocks, setSelectedMocks] = useState<string[]>(['default']);
 
-  const fetchMockMix = async (playlists: string[]) => {
+  const fetchMockMix = useCallback(async (playlists: string[]) => {
     if (!playlists.length) return;
 
     setLoading(true);
@@ -32,26 +31,37 @@ export const SelectMock = () => {
       const params = new URLSearchParams();
       playlists.forEach((p) => params.append('playlist', p));
 
-      const res = await backendApi.get(`/mock?${params.toString()}`);
+      const res = await backendApi.get(`/mock?${params.toString()}`, {
+        timeout: 100000 
+      });
 
-      if (res.status === 200) {
+      if (res.status === 200 && res.data.songs) {
         setData(res.data);
+        setPlaylistNames(playlists);
       } else {
-        setError(`Mock request failed: ${res.status}`);
+        throw new Error("Invalid data format received from server.");
       }
-    } catch (err) {
-      setError('Failed to fetch mocked playlists');
+    } catch (err: any) {
+      console.error("API Error:", err);
+      setError('Server timeout or calculation error. The dataset might be too large for the current server.');
     } finally {
       setLoading(false);
     }
-  };
+  }, [setData, setError, setLoading, setPlaylistNames]);
 
-  const handleChange = (event: SelectChangeEvent<typeof selectedMocks>) => {
-    const {
-      target: { value },
-    } = event;
+  const handleChange = (event: SelectChangeEvent<string[]>) => {
+    const { target: { value } } = event;
+    let newSelection = typeof value === 'string' ? value.split(',') : value;
 
-    const newSelection = typeof value === 'string' ? value.split(',') : value;
+    const lastItem = newSelection[newSelection.length - 1];
+
+    if (lastItem === 'default') {
+      newSelection = ['default'];
+    } else if (newSelection.includes('default') && newSelection.length > 1) {
+      newSelection = newSelection.filter(item => item !== 'default');
+    }
+
+    if (newSelection.length === 0) newSelection = ['default'];
 
     setSelectedMocks(newSelection);
     fetchMockMix(newSelection);
